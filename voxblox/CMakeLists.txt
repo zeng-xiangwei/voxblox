@@ -12,6 +12,7 @@ add_definitions(-std=c++14 -Wall -Wextra)
 ############
 # General idea: first check if we have protobuf catkin, then use that.
 # Otherwise use system protobuf.
+include(${PROJECT_SOURCE_DIR}/cmake/functions.cmake)
 set(PROTO_DEFNS proto/voxblox/Block.proto
                 proto/voxblox/Layer.proto)
 set(BASE_PATH "proto")
@@ -53,6 +54,9 @@ set("${PROJECT_NAME}_SRCS"
 cs_add_library(${PROJECT_NAME}_proto
   ${PROTO_SRCS}
 )
+target_include_directories(${PROJECT_NAME}_proto SYSTEM PUBLIC
+  ${PROTOBUF_INCLUDE_DIR})
+target_link_libraries(${PROJECT_NAME}_proto ${PROTOBUF_LIBRARIES})
 
 cs_add_library(${PROJECT_NAME}
   ${${PROJECT_NAME}_SRCS}
