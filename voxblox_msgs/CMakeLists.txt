@@ -1,12 +1,38 @@
-cmake_minimum_required(VERSION 2.8.3)
+cmake_minimum_required(VERSION 3.0.2)
 project(voxblox_msgs)
 
-find_package(catkin_simple REQUIRED)
-catkin_simple(ALL_DEPS_REQUIRED)
+set(PACKAGE_DEPENDENCIES
+  nav_msgs
+  std_msgs
+)
 
-##########
-# EXPORT #
-##########
+find_package(catkin REQUIRED COMPONENTS message_generation ${PACKAGE_DEPENDENCIES})
 
-cs_install()
-cs_export()
+add_message_files(
+  DIRECTORY msg
+  FILES
+    Block.msg
+    Layer.msg
+    LayerWithTrajectory.msg
+    Mesh.msg
+    MeshBlock.msg
+    MultiMesh.msg
+    VoxelEvaluationDetails.msg
+)
+
+add_service_files(
+  DIRECTORY srv
+  FILES
+    FilePath.srv
+)
+
+generate_messages(
+  DEPENDENCIES
+    ${PACKAGE_DEPENDENCIES}
+)
+
+catkin_package(
+  CATKIN_DEPENDS
+    ${PACKAGE_DEPENDENCIES}
+    message_runtime
+)

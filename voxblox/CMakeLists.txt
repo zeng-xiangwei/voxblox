@@ -1,11 +1,16 @@
-cmake_minimum_required(VERSION 2.8.12)
+cmake_minimum_required(VERSION 3.0.2)
 project(voxblox)
-
-find_package(catkin_simple REQUIRED )
-catkin_simple(ALL_DEPS_REQUIRED)
 
 set(CMAKE_MACOSX_RPATH 0)
 add_definitions(-std=c++14 -Wall -Wextra)
+
+find_package(minkindr REQUIRED)
+find_package(Eigen3 REQUIRED)
+find_package(Protobuf REQUIRED)
+find_package(glog REQUIRED)
+
+find_package(catkin REQUIRED)
+catkin_package()
 
 ############
 # PROTOBUF #
@@ -51,17 +56,30 @@ set("${PROJECT_NAME}_SRCS"
 #############
 # LIBRARIES #
 #############
-cs_add_library(${PROJECT_NAME}_proto
+add_library(${PROJECT_NAME}_proto
   ${PROTO_SRCS}
 )
 target_include_directories(${PROJECT_NAME}_proto SYSTEM PUBLIC
   ${PROTOBUF_INCLUDE_DIR})
-target_link_libraries(${PROJECT_NAME}_proto ${PROTOBUF_LIBRARIES})
+target_link_libraries(${PROJECT_NAME}_proto 
+  ${PROTOBUF_LIBRARIES}
+)
 
-cs_add_library(${PROJECT_NAME}
+add_library(${PROJECT_NAME}
   ${${PROJECT_NAME}_SRCS}
 )
-target_link_libraries(${PROJECT_NAME} ${PROJECT_NAME}_proto)
+target_include_directories(${PROJECT_NAME} PUBLIC 
+  ${catkin_INCLUDE_DIRS}
+  ${EIGEN3_INCLUDE_DIR}
+  ${minkindr_INCLUDE_DIRS}
+  ${PROJECT_SOURCE_DIR}/include
+)
+target_link_libraries(${PROJECT_NAME} 
+  ${PROJECT_NAME}_proto
+  ${catkin_LIBRARIES}
+  ${minkindr_LIBRARIES}
+  glog::glog
+)
 
 ############
 # BINARIES #
@@ -142,5 +160,32 @@ target_link_libraries(test_clear_spheres ${PROJECT_NAME})
 ##########
 # EXPORT #
 ##########
-cs_install()
-cs_export(INCLUDE_DIRS ${CATKIN_DEVEL_PREFIX}/include)
+# Library
+set(${PROJECT_NAME}_TARGETS)
+list(APPEND ${PROJECT_NAME}_TARGETS ${PROJECT_NAME})
+list(APPEND ${PROJECT_NAME}_TARGETS ${PROJECT_NAME}_proto)
+install(TARGETS ${${PROJECT_NAME}_TARGETS}
+    ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+    LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+    RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+)
+
+# Headers
+set(${PROJECT_NAME}_LOCAL_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/include)
+install(DIRECTORY ${PROJECT_NAME}_LOCAL_INCLUDE_DIR
+    DESTINATION ${CATKIN_GLOBAL_INCLUDE_DESTINATION}
+    FILES_MATCHING PATTERN "*.h" PATTERN "*.hpp"
+    PATTERN ".svn" EXCLUDE
+)
+
+# Dependencies
+set(${PROJECT_NAME}_RUN_DEPENDS)
+list(APPEND ${PROJECT_NAME}_RUN_DEPENDS minkindr)
+
+set(${PROJECT_NAME}_LIBRARIES)
+list(APPEND ${PROJECT_NAME}_LIBRARIES ${PROJECT_NAME} ${PROJECT_NAME}_proto)
+catkin_package(
+    INCLUDE_DIRS ${${PROJECT_NAME}_LOCAL_INCLUDE_DIR}
+    LIBRARIES ${${PROJECT_NAME}_LIBRARIES}
+    CATKIN_DEPENDS ${${PROJECT_NAME}_RUN_DEPENDS}
+)

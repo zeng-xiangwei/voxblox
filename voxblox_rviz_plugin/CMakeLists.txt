@@ -1,14 +1,18 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(voxblox_rviz_plugin)
 
-find_package(catkin_simple REQUIRED)
-catkin_simple(ALL_DEPS_REQUIRED)
-
 set(CMAKE_MACOSX_RPATH 0)
 add_definitions(-std=c++11 -Wall)
 
 ## This setting causes Qt's "MOC" generation to happen automatically.
 set(CMAKE_AUTOMOC ON)
+
+find_package(catkin REQUIRED COMPONENTS
+  rviz
+  voxblox
+  voxblox_msgs
+)
+catkin_package()
 
 ## This plugin includes Qt widgets, so we must include Qt.
 ## We'll use the version that rviz used so they are compatible.
@@ -47,14 +51,20 @@ set(SRC_FILES
         src/material_loader.cc
         )
 
-cs_add_library(${PROJECT_NAME}
+add_library(${PROJECT_NAME}
   ${SRC_FILES}
   ${HEADER_FILES}
   ${MOC_FILES}
 )
 
+target_include_directories(${PROJECT_NAME} PUBLIC
+    ${catkin_INCLUDE_DIRS}
+    $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
+    $<INSTALL_INTERFACE:include>
+)
 target_link_libraries(${PROJECT_NAME}
   ${QT_LIBRARIES}
+  ${catkin_LIBRARIES}
 )
 
 
@@ -70,5 +80,9 @@ install(
   DIRECTORY icons/
   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}/icons)
 
-cs_install()
-cs_export()
+set(RUNTIME_DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION})
+install(TARGETS ${PROJECT_NAME}
+  ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+  LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+  RUNTIME DESTINATION ${RUNTIME_DESTINATION}
+)
